@@ -4,10 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'route_constants.dart';
+import '../../features/slang/presentation/screens/home_screen.dart';
+import '../../features/slang/presentation/screens/search_screen.dart';
+import '../../features/slang/presentation/screens/detail_screen.dart';
+import '../../features/favorites/presentation/screens/favorites_screen.dart';
 
 part 'app_router.g.dart';
 
-/// Provider cho GoRouter — dùng @riverpod để generate
+/// Provider cho GoRouter
 @riverpod
 GoRouter appRouter(Ref ref) {
   return GoRouter(
@@ -17,55 +21,81 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: RouteConstants.home,
         name: 'home',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Trang chủ'),
+        builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
         path: RouteConstants.search,
         name: 'search',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Tìm kiếm'),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SearchScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
       GoRoute(
         path: RouteConstants.detail,
         name: 'detail',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
-          return _PlaceholderScreen(title: 'Chi tiết — $id');
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: DetailScreen(slangId: id),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+          );
         },
       ),
       GoRoute(
         path: RouteConstants.favorites,
         name: 'favorites',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Yêu thích'),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const FavoritesScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.0, 1.0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            );
+          },
+        ),
       ),
       GoRoute(
         path: RouteConstants.about,
         name: 'about',
-        builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Giới thiệu'),
+        builder: (context, state) => const _AboutScreen(),
       ),
     ],
   );
 }
 
-/// Placeholder screen — sẽ được thay bằng màn hình thật ở Phase 3
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-
-  final String title;
+/// About screen đơn giản
+class _AboutScreen extends StatelessWidget {
+  const _AboutScreen();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-      ),
+      appBar: AppBar(title: const Text('Giới thiệu')),
+      body: const Center(child: Text('Nói Gì Vậy? v1.0')),
     );
   }
 }
