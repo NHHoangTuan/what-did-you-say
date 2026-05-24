@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -8,7 +9,7 @@ part 'app_router.g.dart';
 
 /// Provider cho GoRouter — dùng @riverpod để generate
 @riverpod
-GoRouter appRouter(AppRouterRef ref) {
+GoRouter appRouter(Ref ref) {
   return GoRouter(
     initialLocation: RouteConstants.home,
     debugLogDiagnostics: true,
@@ -16,12 +17,14 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: RouteConstants.home,
         name: 'home',
-        builder: (context, state) => const _PlaceholderScreen(title: 'Trang chủ'),
+        builder: (context, state) =>
+            const _PlaceholderScreen(title: 'Trang chủ'),
       ),
       GoRoute(
         path: RouteConstants.search,
         name: 'search',
-        builder: (context, state) => const _PlaceholderScreen(title: 'Tìm kiếm'),
+        builder: (context, state) =>
+            const _PlaceholderScreen(title: 'Tìm kiếm'),
       ),
       GoRoute(
         path: RouteConstants.detail,
@@ -34,12 +37,14 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: RouteConstants.favorites,
         name: 'favorites',
-        builder: (context, state) => const _PlaceholderScreen(title: 'Yêu thích'),
+        builder: (context, state) =>
+            const _PlaceholderScreen(title: 'Yêu thích'),
       ),
       GoRoute(
         path: RouteConstants.about,
         name: 'about',
-        builder: (context, state) => const _PlaceholderScreen(title: 'Giới thiệu'),
+        builder: (context, state) =>
+            const _PlaceholderScreen(title: 'Giới thiệu'),
       ),
     ],
   );
