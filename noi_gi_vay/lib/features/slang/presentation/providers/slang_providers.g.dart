@@ -461,5 +461,44 @@ class _SlangDetailProviderElement
   @override
   String get id => (origin as SlangDetailProvider).id;
 }
+
+String _$recentSearchesDataSourceHash() =>
+    r'7cb56983fa152e5be94bd1fe1d83c126183292bc';
+
+/// See also [recentSearchesDataSource].
+@ProviderFor(recentSearchesDataSource)
+final recentSearchesDataSourceProvider =
+    AutoDisposeProvider<RecentSearchesDataSource>.internal(
+  recentSearchesDataSource,
+  name: r'recentSearchesDataSourceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$recentSearchesDataSourceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef RecentSearchesDataSourceRef
+    = AutoDisposeProviderRef<RecentSearchesDataSource>;
+String _$recentSearchesHash() => r'acace7d868bbfb48e8d60cf37cfe771fd477a8fe';
+
+/// Notifier quản lý lịch sử tìm kiếm
+///
+/// Copied from [RecentSearches].
+@ProviderFor(RecentSearches)
+final recentSearchesProvider =
+    AutoDisposeNotifierProvider<RecentSearches, List<String>>.internal(
+  RecentSearches.new,
+  name: r'recentSearchesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$recentSearchesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$RecentSearches = AutoDisposeNotifier<List<String>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/constants/app_constants.dart';
@@ -8,7 +9,10 @@ import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  // Giữ splash screen trong khi khởi tạo
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   // Khởi tạo Hive
   await Hive.initFlutter();
@@ -21,6 +25,9 @@ Future<void> main() async {
       child: NoiGiVayApp(),
     ),
   );
+
+  // Xóa splash khi app đã ready
+  FlutterNativeSplash.remove();
 }
 
 class NoiGiVayApp extends ConsumerWidget {

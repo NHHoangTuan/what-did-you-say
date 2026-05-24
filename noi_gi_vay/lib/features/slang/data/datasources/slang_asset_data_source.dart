@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/hive_constants.dart';
 import '../models/slang_model.dart';
 
 /// Đọc và cache slang data từ assets/data/slang_data.json
@@ -69,18 +71,40 @@ class SlangAssetDataSource {
     return sorted.take(limit).toList();
   }
 
-  /// Lấy slang of the day — deterministic theo ngày (hash of date)
+  /// Lấy slang of the day — cache trong Hive, reset khi sang ngày mới
   Future<SlangModel> getSlangOfDay() async {
     final all = await getAllSlangs();
-    final today = DateTime.now();
-    final dateKey = '${today.year}${today.month}${today.day}';
-    final index = dateKey.hashCode.abs() % all.length;
-    return all[index];
+    final box = Hive.box<String>(HiveConstants.slangOfDayBox);
+
+    final today = _todayKey();
+    final cachedDate = box.get(HiveConstants.slangOfDayDateKey);
+    final cachedId = box.get(HiveConstants.slangOfDayKey);
+
+    // Nếu cùng ngày và đã có cache → trả về ngay
+    if (cachedDate == today && cachedId != null) {
+      final found = all.where((s) => s.id == cachedId).firstOrNull;
+      if (found != null) return found;
+    }
+
+    // Ngày mới hoặc chưa có cache → pick deterministic theo ngày
+    final index = today.hashCode.abs() % all.length;
+    final picked = all[index];
+
+    await box.put(HiveConstants.slangOfDayKey, picked.id);
+    await box.put(HiveConstants.slangOfDayDateKey, today);
+
+    return picked;
   }
 
   // --- Private helpers ---
 
   String _normalize(String text) => text.toLowerCase().trim();
+
+  /// Key ngày hôm nay dạng 'YYYY-MM-DD'
+  String _todayKey() {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
 
   int _trendOrder(trendLevel) {
     switch (trendLevel.toString()) {

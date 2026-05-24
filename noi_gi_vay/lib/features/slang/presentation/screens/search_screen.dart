@@ -26,7 +26,7 @@ class SearchQuery extends _$SearchQuery {
 // SearchScreen
 // ---------------------------------------------------------------------------
 
-/// SearchScreen — real-time search với debounce nhẹ
+/// SearchScreen — real-time search với recent searches
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -67,6 +67,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _focusNode.requestFocus();
   }
 
+  /// Khi user submit (nhấn enter / done) → lưu vào recent
+  void _onSubmitted(String val) {
+    final q = val.trim();
+    if (q.isNotEmpty) {
+      ref.read(recentSearchesProvider.notifier).add(q);
+    }
+  }
+
+  /// Chọn query từ recent list → đổ vào text field + search
+  void _selectRecent(String query) {
+    _controller.text = query;
+    _controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: query.length),
+    );
+    ref.read(searchQueryProvider.notifier).update(query);
+    ref.read(recentSearchesProvider.notifier).add(query);
+  }
+
   @override
   Widget build(BuildContext context) {
     final query = ref.watch(searchQueryProvider);
@@ -88,8 +106,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             controller: _controller,
             focusNode: _focusNode,
             onChanged: _onChanged,
+            onSubmitted: _onSubmitted,
             style: AppTextStyles.bodyLarge,
             cursorColor: AppColors.accentPurple,
+            textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               hintText: 'Tìm slang, meme, cụm từ...',
               hintStyle: AppTextStyles.bodyLarge.copyWith(
@@ -108,19 +128,98 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
       ),
       body: query.isEmpty
-          ? _EmptyQueryHint()
-          : _SearchResults(query: query),
+          ? _RecentSearchesPanel(onSelect: _selectRecent)
+          : _SearchResults(query: query, onSubmitted: _onSubmitted),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Khi chưa nhập gì: gợi ý
+// Recent Searches Panel (hiện khi chưa nhập)
 // ---------------------------------------------------------------------------
 
-class _EmptyQueryHint extends ConsumerWidget {
+class _RecentSearchesPanel extends ConsumerWidget {
+  const _RecentSearchesPanel({required this.onSelect});
+
+  final void Function(String) onSelect;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final recents = ref.watch(recentSearchesProvider);
+
+    if (recents.isEmpty) {
+      return _EmptyQueryHint();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '🕐 Tìm gần đây',
+                style: AppTextStyles.labelLarge.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              TextButton(
+                onPressed: () =>
+                    ref.read(recentSearchesProvider.notifier).clear(),
+                child: Text(
+                  'Xóa hết',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // List
+        Expanded(
+          child: ListView.builder(
+            itemCount: recents.length,
+            itemBuilder: (ctx, i) {
+              final q = recents[i];
+              return ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                leading: Icon(
+                  Icons.history_rounded,
+                  size: 18,
+                  color: AppColors.textMuted,
+                ),
+                title: Text(q, style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                )),
+                trailing: IconButton(
+                  icon: Icon(Icons.close_rounded,
+                      size: 16, color: AppColors.textMuted),
+                  onPressed: () =>
+                      ref.read(recentSearchesProvider.notifier).remove(q),
+                ),
+                onTap: () => onSelect(q),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hint khi không có recent searches
+// ---------------------------------------------------------------------------
+
+class _EmptyQueryHint extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -147,9 +246,10 @@ class _EmptyQueryHint extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _SearchResults extends ConsumerWidget {
-  const _SearchResults({required this.query});
+  const _SearchResults({required this.query, required this.onSubmitted});
 
   final String query;
+  final void Function(String) onSubmitted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

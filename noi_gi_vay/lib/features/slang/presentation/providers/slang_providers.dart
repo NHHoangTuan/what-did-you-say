@@ -8,6 +8,7 @@ import '../../domain/usecases/get_slang_of_day_use_case.dart';
 import '../../domain/usecases/get_trending_use_case.dart';
 import '../../domain/usecases/search_slangs_use_case.dart';
 import '../../data/datasources/slang_asset_data_source.dart';
+import '../../data/datasources/recent_searches_data_source.dart';
 import '../../data/repositories/slang_repository_impl.dart';
 
 part 'slang_providers.g.dart';
@@ -70,4 +71,35 @@ Future<List<SlangEntity>> slangSearch(Ref ref, String query) {
 @riverpod
 Future<SlangEntity?> slangDetail(Ref ref, String id) {
   return ref.watch(getSlangByIdUseCaseProvider).call(id);
+}
+
+// --- Recent Searches ---
+
+@riverpod
+RecentSearchesDataSource recentSearchesDataSource(Ref ref) {
+  return RecentSearchesDataSource();
+}
+
+/// Notifier quản lý lịch sử tìm kiếm
+@riverpod
+class RecentSearches extends _$RecentSearches {
+  @override
+  List<String> build() {
+    return ref.watch(recentSearchesDataSourceProvider).getRecentSearches();
+  }
+
+  Future<void> add(String query) async {
+    await ref.read(recentSearchesDataSourceProvider).addSearch(query);
+    ref.invalidateSelf();
+  }
+
+  Future<void> remove(String query) async {
+    await ref.read(recentSearchesDataSourceProvider).removeSearch(query);
+    ref.invalidateSelf();
+  }
+
+  Future<void> clear() async {
+    await ref.read(recentSearchesDataSourceProvider).clearAll();
+    ref.invalidateSelf();
+  }
 }
